@@ -39,7 +39,7 @@ contract RPS is CommitReveal{
         slotPlayer[idx] = 1;
         numPlayer++;
         if (numPlayer == 1) {
-            deadline = block.timestamp + 15 seconds;
+            deadline = block.timestamp + 15 minutes;
         }
     }
 
@@ -60,6 +60,15 @@ contract RPS is CommitReveal{
         resetvalue();
     }
 
+    function withdrawRevealState(uint idx) public {
+        require(numPlayer == 2, "There's only 1 player");
+        require(numReveal == 1, "player are both reveal");
+        require(msg.sender == player[idx].addr, "Sender'id is not correct");
+        require(block.timestamp > deadline, "Deadline not reached");
+        payable(player[idx].addr).transfer(reward);
+        resetvalue();
+    }
+
     function input(uint choice, uint idx, uint salt) public  {
         require(numPlayer == 2);
         require(msg.sender == player[idx].addr);
@@ -67,7 +76,7 @@ contract RPS is CommitReveal{
         commit(getSaltedHash(bytes32(choice),bytes32(salt)));
         numCommit++;
         if (numCommit == 1) {
-            deadline = block.timestamp + 15 seconds;
+            deadline = block.timestamp + 15 minutes;
         }
     }
 
@@ -78,7 +87,9 @@ contract RPS is CommitReveal{
         revealAnswer(bytes32(answer),bytes32(salt));
         player[idx].choice = answer;
         numReveal++;
-        if (numReveal == 2) {
+        if (numReveal == 1) {
+            deadline = block.timestamp + 15 minutes;
+        } else{
             _checkWinnerAndPay();
         }
     }
