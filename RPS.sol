@@ -15,6 +15,20 @@ contract RPS is CommitReveal{
     uint public numCommit = 0;
     uint public deadline = 0;
 
+    function resetvalue() public {
+        reward = 0;
+        numPlayer = 0;
+        deadline = 0;
+        slotPlayer[0] = 0;
+        slotPlayer[1] = 0;
+        player[0].addr = address(0);
+        player[1].addr = address(0);
+        player[0].choice = 3;
+        player[1].choice = 3;
+        numCommit = 0;
+        numReveal = 0;
+    }
+
     function addPlayer(uint idx) public payable {
         require(slotPlayer[idx] == 0);
         require(numPlayer < 2);
@@ -34,11 +48,7 @@ contract RPS is CommitReveal{
         require(block.timestamp > deadline);
         require(msg.sender == player[idx].addr);
         payable(player[idx].addr).transfer(reward);
-        reward = 0;
-        numPlayer = 0;
-        deadline = 0;
-        slotPlayer[idx] = 0;
-        player[idx].addr = address(0);
+        resetvalue();
     }
 
     function withdrawChoiceState(uint idx) public {
@@ -47,15 +57,7 @@ contract RPS is CommitReveal{
         require(msg.sender == player[idx].addr, "Sender'id is not correct");
         require(block.timestamp > deadline, "Deadline not reached");
         payable(player[idx].addr).transfer(reward);
-        reward = 0;
-        numPlayer = 0;
-        deadline = 0;
-        slotPlayer[idx] = 0;
-        slotPlayer[(idx+1)%2] = 0;
-        player[idx].addr = address(0);
-        player[(idx+1)%2].addr = address(0);
-        player[idx].choice = 3;
-        numCommit = 0;
+        resetvalue();
     }
 
     function input(uint choice, uint idx, uint salt) public  {
@@ -100,5 +102,6 @@ contract RPS is CommitReveal{
             account0.transfer(reward / 2);
             account1.transfer(reward / 2);
         }
+        resetvalue();
     }
 }
