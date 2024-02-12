@@ -7,18 +7,21 @@ contract RPS is CommitReveal{
         uint choice; // 0 - Rock, 1 - Paper , 2 - Scissors, 3 - undefined
         address addr;
     }
+    uint[2] public slotPlayer = [0,0];
     uint public numPlayer = 0;
     uint public reward = 0;
     mapping (uint => Player) public player;
     uint public numReveal = 0;
     uint public numCommit = 0;
 
-    function addPlayer() public payable {
+    function addPlayer(uint idx) public payable {
+        require(slotPlayer[idx] == 0);
         require(numPlayer < 2);
         require(msg.value == 1 ether);
         reward += msg.value;
-        player[numPlayer].addr = msg.sender;
-        player[numPlayer].choice = 3;
+        player[idx].addr = msg.sender;
+        player[idx].choice = 3;
+        slotPlayer[idx] = 1;
         numPlayer++;
     }
 
