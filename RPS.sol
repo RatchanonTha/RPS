@@ -13,6 +13,7 @@ contract RPS is CommitReveal{
     mapping (uint => Player) public player;
     uint public numReveal = 0;
     uint public numCommit = 0;
+    uint public deadline = 0;
 
     function addPlayer(uint idx) public payable {
         require(slotPlayer[idx] == 0);
@@ -23,6 +24,38 @@ contract RPS is CommitReveal{
         player[idx].choice = 3;
         slotPlayer[idx] = 1;
         numPlayer++;
+        if (numPlayer == 1) {
+            deadline = block.timestamp + 15 seconds;
+        }
+    }
+
+    function withdrawAddState(uint idx) public {
+        require(numPlayer == 1);
+        require(block.timestamp > deadline);
+        require(msg.sender == player[idx].addr);
+        payable(player[idx].addr).transfer(reward);
+        reward = 0;
+        numPlayer = 0;
+        deadline = 0;
+        slotPlayer[idx] = 0;
+        player[idx].addr = address(0);
+    }
+
+    function withdrawChoiceState(uint idx) public {
+        require(numPlayer == 2, "There's only 1 player");
+        require(numCommit == 1, "player are both commit");
+        require(msg.sender == player[idx].addr, "Sender'id is not correct");
+        require(block.timestamp > deadline, "Deadline not reached");
+        payable(player[idx].addr).transfer(reward);
+        reward = 0;
+        numPlayer = 0;
+        deadline = 0;
+        slotPlayer[idx] = 0;
+        slotPlayer[(idx+1)%2] = 0;
+        player[idx].addr = address(0);
+        player[(idx+1)%2].addr = address(0);
+        player[idx].choice = 3;
+        numCommit = 0;
     }
 
     function input(uint choice, uint idx, uint salt) public  {
@@ -31,7 +64,11 @@ contract RPS is CommitReveal{
         require(choice == 0 || choice == 1 || choice == 2);
         commit(getSaltedHash(bytes32(choice),bytes32(salt)));
         numCommit++;
+        if (numCommit == 1) {
+            deadline = block.timestamp + 15 seconds;
+        }
     }
+
 
     function revealAnswerPlayer(uint idx, uint answer,uint salt) public {
         require(numCommit == 2);
